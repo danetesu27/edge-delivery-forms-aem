@@ -1,5 +1,5 @@
 mountpoints:
   /:
-    url: https://author-p34633-e913315.adobeaemcloud.com/bin/franklin.delivery/danetesu27/edge-delivery-forms-aem/main
+    url: https://google
     type: "markup"
     suffix: ".html"
