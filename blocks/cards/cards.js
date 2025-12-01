@@ -1,11 +1,3 @@
-/*
-import { patternDecorate } from '../../scripts/blockTemplate.js';
-
-export default async function decorate(block) {
-  patternDecorate(block);
-}
-*/
-
 import { createOptimizedPicture } from '../../scripts/aem.js';
 import { moveInstrumentation } from '../../scripts/scripts.js';
 
@@ -32,39 +24,35 @@ export default function decorate(block) {
 
     // Process the li children to identify and style them correctly
     [...li.children].forEach((div, index) => {
-      // First div (index 0) - Image
       if (index === 0) {
+        // First div (index 0) - Image
         div.className = 'cards-card-image';
-      }
-      // Second div (index 1) - Content with button
-      else if (index === 1) {
+      } else if (index === 1) {
+        // Second div (index 1) - Content with button
         div.className = 'cards-card-body';
-      }
-      // Third div (index 2) - Card style configuration
-      else if (index === 2) {
+      } else if (index === 2) {
+        // Third div (index 2) - Card style configuration
         div.className = 'cards-config';
         const p = div.querySelector('p');
         if (p) {
           p.style.display = 'none'; // Hide the configuration text
         }
-      }
-      // Fourth div (index 3) - CTA style configuration
-      else if (index === 3) {
+      } else if (index === 3) {
+        // Fourth div (index 3) - CTA style configuration
         div.className = 'cards-config';
         const p = div.querySelector('p');
         if (p) {
           p.style.display = 'none'; // Hide the configuration text
         }
-      }
-      // Any other divs
-      else {
+      } else {
+        // Any other divs
         div.className = 'cards-card-body';
       }
     });
 
     // Apply CTA styles to button containers
     const buttonContainers = li.querySelectorAll('p.button-container');
-    buttonContainers.forEach(buttonContainer => {
+    buttonContainers.forEach((buttonContainer) => {
       // Remove any existing CTA classes
       buttonContainer.classList.remove('default', 'cta-button', 'cta-button-secondary', 'cta-button-dark', 'cta-default');
       // Add the correct CTA class
