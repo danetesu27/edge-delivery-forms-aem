@@ -48,6 +48,27 @@
           "value": "",
           "label": "Text",
           "valueType": "string"
+        },
+        {
+          "component": "select",
+          "name": "ctastyle",
+          "label": "CTA Style",
+          "valueType": "string",
+          "value": "button",
+          "options": [
+            {
+              "name": "Primary Button",
+              "value": "button"
+            },
+            {
+              "name": "Secondary Button",
+              "value": "button-secondary"
+            },
+            {
+              "name": "Dark Button",
+              "value": "button-dark"
+            }
+          ]
         }
       ]
     }
