@@ -78,14 +78,14 @@ async function fieldChanged(payload, form, generateFormRendition) {
         }
         break;
       case 'validationMessage':
-        {
-          const { validity } = payload.field;
-          if (field.setCustomValidity
-          && (validity?.expressionMismatch || validity?.customConstraint)) {
-            field.setCustomValidity(currentValue);
-            updateOrCreateInvalidMsg(field, currentValue);
-          }
+      {
+        const { validity } = payload.field;
+        if (field.setCustomValidity
+            && (validity?.expressionMismatch || validity?.customConstraint)) {
+          field.setCustomValidity(currentValue);
+          updateOrCreateInvalidMsg(field, currentValue);
         }
+      }
         break;
       case 'value':
         if (['number', 'date', 'text', 'email'].includes(field.type) && (displayFormat || displayValueExpression)) {
@@ -97,8 +97,8 @@ async function fieldChanged(payload, form, generateFormRendition) {
         } else if (fieldType === 'radio-group' || fieldType === 'checkbox-group') {
           field.querySelectorAll(`input[name=${name}]`).forEach((el) => {
             const exists = (Array.isArray(currentValue)
-              && currentValue.some((x) => compare(x, el.value, type.replace('[]', ''))))
-              || compare(currentValue, el.value, type);
+                    && currentValue.some((x) => compare(x, el.value, type.replace('[]', ''))))
+                || compare(currentValue, el.value, type);
             el.checked = exists;
           });
         } else if (fieldType === 'checkbox') {
@@ -114,9 +114,9 @@ async function fieldChanged(payload, form, generateFormRendition) {
         break;
       case 'visible':
         fieldWrapper.dataset.visible = currentValue;
-        if(fieldType === 'panel' && fieldWrapper.querySelector('dialog')) {
+        if (fieldType === 'panel' && fieldWrapper.querySelector('dialog')) {
           const dialog = fieldWrapper.querySelector('dialog');
-          if(currentValue === false && dialog.open) {
+          if (currentValue === false && dialog.open) {
             dialog.close(); // close triggers the event listener that removes the dialog overlay
           }
         }
