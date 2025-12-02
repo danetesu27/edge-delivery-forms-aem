@@ -1,4 +1,5 @@
 /* eslint-disable */
+/* eslint-disable */
 import {
   div, a, span, img, video, source, button, h1,
 } from '../../scripts/dom-helpers.js';
@@ -22,6 +23,7 @@ function createVideoPlayer(videoSrc) {
             class: 'pause-icon controls', src: pauseIcon, width: 28, height: 28, alt: 'pause animation',
           })),
       ),
+      // INSTRUMENTATION: Added props for video editing if needed, though video logic is complex in UE
       video({ id: 'videoPlayer' },
           source({ src: videoSrc, type: 'video/mp4' }, 'Your browser does not support the video tag.'),
       ),
@@ -40,11 +42,20 @@ function createBackgroundImage(properties) {
   if (!properties.imageref) missingSrc = true;
   const imgSrc = (!missingSrc) ? properties.imageref : '';
   const imgAlt = (properties.imagealt) ? properties.imagealt : '';
+
   const imgBackground = div({ class: 'background-image' },
-      img({ class: 'teaser-background', src: imgSrc, alt: imgAlt }),
+      // INSTRUMENTATION: Link this image to the 'imageRef' field in your JSON model
+      img({
+        class: 'teaser-background',
+        src: imgSrc,
+        alt: imgAlt,
+        'data-aue-prop': 'imageRef',
+        'data-aue-type': 'media',
+        'data-aue-label': 'Image'
+      }),
   );
 
-  if (missingSrc) imgBackground.classList.add('inactive'); // hide img bg on initial authoring
+  if (missingSrc) imgBackground.classList.add('inactive');
 
   return imgBackground;
 }
@@ -57,14 +68,16 @@ function observeVideo(block, autoplay) {
         if (!(prefersReducedMotion.matches) && autoplay && (videoPlayerEl.dataset.state !== 'pause')) {
           const playButton = document.getElementById('playButton');
           const pauseButton = document.getElementById('pauseButton');
-          playButton.classList.add('inactive');
-          playButton.removeAttribute('tabindex');
-          pauseButton.classList.remove('inactive');
-          pauseButton.setAttribute('tabindex', 0); // hide 'play' button
-          videoPlayerEl.play(); // Play the video when it enters the viewport
+          if(playButton && pauseButton) {
+            playButton.classList.add('inactive');
+            playButton.removeAttribute('tabindex');
+            pauseButton.classList.remove('inactive');
+            pauseButton.setAttribute('tabindex', 0);
+            videoPlayerEl.play();
+          }
         }
       } else {
-        videoPlayerEl.pause(); // Pause the video when it leaves the viewport
+        videoPlayerEl.pause();
       }
     });
   }, { threshold: 0.5 });
@@ -76,10 +89,11 @@ function attachListeners() {
   const playButton = document.getElementById('playButton');
   const pauseButton = document.getElementById('pauseButton');
 
-  // Play the video when the play button is clicked or a keyboard button pressed
+  if(!playButton || !pauseButton) return;
+
   ['click', 'keydown'].forEach((eventType) => {
     playButton.addEventListener(eventType, (event) => {
-      if (eventType === 'keydown' && event.key !== 'Enter') return; // escape non-enter keys
+      if (eventType === 'keydown' && event.key !== 'Enter') return;
       playButton.classList.add('inactive');
       playButton.removeAttribute('tabindex');
       pauseButton.classList.remove('inactive');
@@ -92,7 +106,7 @@ function attachListeners() {
 
   ['click', 'keydown'].forEach((eventType) => {
     pauseButton.addEventListener(eventType, (event) => {
-      if (eventType === 'keydown' && event.key !== 'Enter') return; // escape non-enter keys
+      if (eventType === 'keydown' && event.key !== 'Enter') return;
       playButton.classList.remove('inactive');
       playButton.setAttribute('tabindex', 0);
       pauseButton.classList.add('inactive');
@@ -105,10 +119,12 @@ function attachListeners() {
 }
 
 export default function decorate(block) {
+  // Logic to preserve existing RTE content before wiping block
   const rteElementTag = Array.from(block.querySelectorAll('p'))
       .find((el) => el.textContent.trim() === 'title');
   const rteElement = rteElementTag?.parentElement?.nextElementSibling;
   const rteContent = rteElement?.querySelector('p')?.innerHTML;
+
   const sampleVideo = 'https://v.ftcdn.net/02/35/97/40/700_F_235974059_oVftmgBBJ32tgsDvxRdMdtpQDMfNFWEt_ST.mp4';
 
   const properties = readBlockConfig(block);
@@ -135,6 +151,7 @@ export default function decorate(block) {
   const buttonStyle = (properties['btn-style']) ? properties['btn-style'] : 'dark-bg';
   const buttonLink = (properties['btn-link']) ? properties['btn-link'] : '';
   const videoReference = isVideo ? properties.videoreference : sampleVideo;
+
   const teaser = div({ class: 'teaser-container' },
       isVideo ? createVideoPlayer(videoReference) : createBackgroundImage(properties),
       div({ class: 'teaser-swoosh-wrapper' },
@@ -144,10 +161,29 @@ export default function decorate(block) {
               img({ class: 'swoosh second', src: swooshSecond, alt: 'background swoosh second' }),
           ),
           div({ class: 'teaser-title-wrapper' },
-              h1({ class: 'teaser-title' }),
+              // INSTRUMENTATION: Added props for Title
+              h1({
+                class: 'teaser-title',
+                'data-aue-prop': 'title',
+                'data-aue-type': 'rich-text',
+                'data-aue-label': 'Title'
+              }),
               div({ class: buttonContainerClass },
-                  a({ id: 'button', href: buttonLink, class: `button ${buttonStyle}` },
-                      span({ class: 'button-text' }, buttonText),
+                  // INSTRUMENTATION: Added props for Button Link and Text
+                  a({
+                        id: 'button',
+                        href: buttonLink,
+                        class: `button ${buttonStyle}`,
+                        'data-aue-prop': 'btn-link',
+                        'data-aue-type': 'reference',
+                        'data-aue-label': 'Button Link'
+                      },
+                      span({
+                        class: 'button-text',
+                        'data-aue-prop': 'buttonText',
+                        'data-aue-type': 'text',
+                        'data-aue-label': 'Button Text'
+                      }, buttonText),
                   ),
               ),
           ),
@@ -155,6 +191,8 @@ export default function decorate(block) {
   );
 
   teaser.querySelector('.teaser-title').innerHTML = properties.title ? rteContent : 'Title';
+
+  // Clear the block and append the new instrumented DOM
   block.innerHTML = '';
   block.appendChild(teaser);
 
