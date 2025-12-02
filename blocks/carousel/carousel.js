@@ -1,13 +1,18 @@
+/* eslint-disable */
 import { createOptimizedPicture } from '../../scripts/aem.js';
 import { moveInstrumentation } from '../../scripts/scripts.js';
 import createSlider from '../../scripts/slider.js';
 
+
+function setCarouselItems(number) {
+  document.querySelector('.carousel > ul')?.style.setProperty('--items-per-view', number);
+}
+
 export default function decorate(block) {
   let i = 0;
-
+  setCarouselItems(2);
   const slider = document.createElement('ul');
   const leftContent = document.createElement('div');
-
   [...block.children].forEach((row) => {
     if (i > 3) {
       const li = document.createElement('li');
@@ -30,35 +35,39 @@ export default function decorate(block) {
 
       // Process the li children to identify and style them correctly
       [...li.children].forEach((div, index) => {
+        // First div (index 0) - Image
         if (index === 0) {
-          // First div (index 0) - Image
           div.className = 'cards-card-image';
-        } else if (index === 1) {
-          // Second div (index 1) - Content with button
+        }
+        // Second div (index 1) - Content with button
+        else if (index === 1) {
           div.className = 'cards-card-body';
-        } else if (index === 2) {
-          // Third div (index 2) - Card style configuration
+        }
+        // Third div (index 2) - Card style configuration
+        else if (index === 2) {
           div.className = 'cards-config';
           const p = div.querySelector('p');
           if (p) {
             p.style.display = 'none'; // Hide the configuration text
           }
-        } else if (index === 3) {
-          // Fourth div (index 3) - CTA style configuration
+        }
+        // Fourth div (index 3) - CTA style configuration
+        else if (index === 3) {
           div.className = 'cards-config';
           const p = div.querySelector('p');
           if (p) {
             p.style.display = 'none'; // Hide the configuration text
           }
-        } else {
-          // Any other divs
+        }
+        // Any other divs
+        else {
           div.className = 'cards-card-body';
         }
       });
 
       // Apply CTA styles to button containers
       const buttonContainers = li.querySelectorAll('p.button-container');
-      buttonContainers.forEach((buttonContainer) => {
+      buttonContainers.forEach(buttonContainer => {
         // Remove any existing CTA classes
         buttonContainer.classList.remove('default', 'cta-button', 'cta-button-secondary', 'cta-button-dark', 'cta-default');
         // Add the correct CTA class
@@ -79,4 +88,12 @@ export default function decorate(block) {
   });
 
   slider.querySelectorAll('picture > img').forEach((img) => {
-    const optimizedPic = createOptim
+    const optimizedPic = createOptimizedPicture(img.src, img.alt, false, [{ width: '750' }]);
+    moveInstrumentation(img, optimizedPic.querySelector('img'));
+    img.closest('picture').replaceWith(optimizedPic);
+  });
+  block.textContent = '';
+  block.parentNode.parentNode.prepend(leftContent);
+  block.append(slider);
+  createSlider(block);
+}
