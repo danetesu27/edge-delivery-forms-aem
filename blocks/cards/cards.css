@@ -1,4 +1,4 @@
-/* stylelint-disable no-descending-specificity */
+/* stylelint-disable */
 .section.cards-container > div > p::after {
   content: "----------";
   color: transparent;
