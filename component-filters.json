@@ -17,7 +17,11 @@
       "columns",
       "fragment",
       "form",
-      "form-embed"
+      "form-embed",
+      "carousel",
+      "dm-asset",
+      "dm-template",
+      "teaser"
     ]
   },
   {
