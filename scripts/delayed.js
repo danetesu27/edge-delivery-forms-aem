@@ -1,14 +1,6 @@
 // add delayed functionality here
-import {
-    getMetadata, loadScript, fetchPlaceholders,
-    sampleRUM,
-} from './aem.js';
-import {
-    a, span, i,
-} from './dom-helpers.js';
-import {
-    isInternalPage,
-} from './utils.js';
+import { getMetadata, loadScript } from './aem.js';
+import { a, span, i } from './dom-helpers.js';
 
 // Adobe Target - start
 
@@ -17,25 +9,22 @@ window.targetGlobalSettings = {
 };
 
 function loadAT() {
-    function targetPageParams() {
+    window.targetPageParams = function targetPageParams() {
         return {
-            "at_property": "549d426b-0bcc-be60-ce27-b9923bfcad4f"
+            at_property: '549d426b-0bcc-be60-ce27-b9923bfcad4f',
         };
-    }
-    loadScript(window.hlx.codeBasePath+'/scripts/at-lsig.js');
-
+    };
+    loadScript(`${window.hlx.codeBasePath}/scripts/at-lsig.js`);
 }
 // Adobe Target - end
-
-
 
 // refactor tweetable links function
 /**
  * Opens a popup for the Twitter links autoblock.
  */
 function openPopUp(popUrl) {
-    const popupParams = `height=450, width=550, top=${(window.innerHeight / 2 - 275)}`
-        + `, left=${(window.innerWidth / 2 - 225)}`
+    const popupParams = `height=450, width=550, top=${(window.innerHeight / 2) - 275}`
+        + `, left=${(window.innerWidth / 2) - 225}`
         + ', toolbar=0, location=0, menubar=0, directories=0, scrollbars=0';
     window.open(popUrl, 'fbShareWindow', popupParams);
 }
@@ -45,18 +34,18 @@ function openPopUp(popUrl) {
  */
 function embedCustomLibraries() {
     const externalLibs = getMetadata('js-files');
-    const libsArray = externalLibs?.split(',').map(url => url.trim());
+    const libsArray = externalLibs?.split(',').map((url) => url.trim());
 
-    libsArray.forEach((url, index) => {
-        //console.log(`Loading script ${index + 1}: ${url}`);
+    libsArray.forEach((url) => {
+        // console.log(`Loading script ${index + 1}: ${url}`);
         loadScript(`${url}`);
     });
-
 }
 
 /**
  * Finds and decorates anchor elements with Twitter hrefs
  */
+// eslint-disable-next-line no-unused-vars
 function buildTwitterLinks() {
     const main = document.querySelector('main');
     if (!main) return;
@@ -79,7 +68,10 @@ function buildTwitterLinks() {
 
                 let modalURL = `https://twitter.com/intent/tweet?text=${encodeURIComponent(tweetContent)}`
                     + `&original_referrer=${encodedUrl}&source=tweetbutton`;
-                if (channel) modalURL += `&via=${encodeURIComponent(channel.charAt(0) === '@' ? channel.substring(1) : channel)}`;
+                if (channel) {
+                    const channelName = channel.charAt(0) === '@' ? channel.substring(1) : channel;
+                    modalURL += `&via=${encodeURIComponent(channelName)}`;
+                }
                 if (hashtag) modalURL += `&hashtags=${encodeURIComponent(hashtag)}`;
 
                 const tweetableEl = span(
@@ -100,7 +92,6 @@ function buildTwitterLinks() {
 }
 
 if (!window.location.hostname.includes('localhost')) {
-
     embedCustomLibraries();
     if (window.parent && !(window.parent.location.pathname.indexOf('/canvas/') > -1)) {
         loadAT();

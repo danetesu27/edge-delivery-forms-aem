@@ -2,7 +2,6 @@ import { createOptimizedPicture } from '../../scripts/aem.js';
 import { moveInstrumentation } from '../../scripts/scripts.js';
 import createSlider from '../../scripts/slider.js';
 
-
 export default function decorate(block) {
   let i = 0;
 
@@ -80,17 +79,4 @@ export default function decorate(block) {
   });
 
   slider.querySelectorAll('picture > img').forEach((img) => {
-    const optimizedPic = createOptimizedPicture(img.src, img.alt, false, [{ width: '750' }]);
-    moveInstrumentation(img, optimizedPic.querySelector('img'));
-    img.closest('picture').replaceWith(optimizedPic);
-  });
-
-  block.textContent = '';
-  block.parentNode.parentNode.prepend(leftContent);
-  block.append(slider);
-
-  // Set items property directly on the slider element we created
-  slider.style.setProperty('--items-per-view', 2);
-
-  createSlider(block);
-}
+    const optimizedPic = createOptim
