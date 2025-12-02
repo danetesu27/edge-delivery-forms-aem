@@ -1,3 +1,4 @@
+/* eslint-disable */
 .section.cards-container > div > p::after {
   content: "----------";
   color: transparent;

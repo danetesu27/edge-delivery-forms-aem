@@ -1,4 +1,4 @@
-/* stylelint-disable no-descending-specificity */
+/* eslint-disable */
 .dynamic-media {
     display: grid;
     grid-template-areas: "teaser";
