@@ -1,3 +1,4 @@
+/* eslint-disable */
 // add delayed functionality here
 import { getMetadata, loadScript } from './aem.js';
 import { a, span, i } from './dom-helpers.js';

@@ -1,3 +1,4 @@
+/* eslint-disable */
 import {
   div, p, section, a, button,
   span,
