@@ -331,5 +331,29 @@ html[lang="ru"] .teaser-wrapper .button-container > a {
         height: 425px;
         width: 425px;
     }
+    /* --- UNIVERSAL EDITOR FIXES --- */
+
+    /* 1. Stop the big swoosh container from stealing clicks */
+    .teaser-wrapper .teaser-swoosh-wrapper {
+        pointer-events: none;
+    }
+
+    /* 2. Stop the inner swoosh layers from stealing clicks */
+    .teaser-wrapper .swoosh-layers,
+    .teaser-wrapper .swoosh-bg {
+        pointer-events: none;
+    }
+
+    /* 3. Re-enable clicks specifically for the Title and Button */
+    .teaser-wrapper .teaser-title-wrapper {
+        pointer-events: auto;
+        z-index: 10; /* Ensure it is strictly above everything else */
+    }
+
+    /* 4. Ensure the background image can be clicked (if it's behind the swoosh) */
+    .teaser-wrapper .background-image {
+        pointer-events: auto;
+        z-index: 0;
+    }
     
 }
