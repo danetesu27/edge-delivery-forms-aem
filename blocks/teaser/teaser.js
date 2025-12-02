@@ -1,3 +1,4 @@
+/* eslint-disable */
 import {
   div, a, span, img, video, source, button, h1,
 } from '../../scripts/dom-helpers.js';

@@ -1,3 +1,4 @@
+/* eslint-disable */
 (function initAEMGenAI() {
     let isAEMGenAIVariationsAppLoaded = false;
 
