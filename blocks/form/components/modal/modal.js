@@ -14,21 +14,21 @@ export class Modal {
     const dialog = document.createElement('dialog');
     const dialogContent = document.createElement('div');
     dialogContent.classList.add('modal-content');
-    
+
     // Use the stored original content instead of panel.childNodes
     if (this.originalContent) {
       // Clone the nodes to avoid reference issues
-      this.originalContent.forEach(node => {
+      this.originalContent.forEach((node) => {
         dialogContent.appendChild(node.cloneNode(true));
       });
     } else {
       // First time initialization - store original content
       this.originalContent = [...panel.childNodes];
-      this.originalContent.forEach(node => {
+      this.originalContent.forEach((node) => {
         dialogContent.appendChild(node.cloneNode(true));
       });
     }
-    
+
     dialog.append(dialogContent);
     const closeButton = document.createElement('button');
     closeButton.classList.add('close-button');
@@ -65,7 +65,7 @@ export class Modal {
         this.modalWrapper.appendChild(this.dialog);
       }
     }
-    
+
     if (this.dialog.isConnected) {
       this.dialog.showModal();
       document.body.classList.add('modal-open');

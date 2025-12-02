@@ -2,7 +2,8 @@
  * @param {HTMLElement} block
  */
 export default function decorate(block) {
-    // this shouldHide logic is temporary till the time DM rendering on published live site is resolved.
+    // this shouldHide logic is temporary till the time DM rendering
+    // on published live site is resolved.
     const { hostname } = window.location;
     const shouldHide = hostname.includes('aem.live') || hostname.includes('aem.page');
 
@@ -42,7 +43,8 @@ export default function decorate(block) {
             // Get imageName from imageSrc expected in the format /content/dam/<...>/<imageName>.<extension>
             const imageName = imageSrc.split('/').pop().split('.')[0];
 
-            const dmUrl = dmUrlEl?.getAttribute('href') || 'https://smartimaging.scene7.com/is/image/DynamicMediaNA';
+            const dmUrl = dmUrlEl?.getAttribute('href')
+                || 'https://smartimaging.scene7.com/is/image/DynamicMediaNA';
 
             const finalSrc = `${dmUrl}${dmUrl.endsWith('/') ? '' : '/'}${imageName}`;
 
@@ -61,7 +63,3 @@ export default function decorate(block) {
             block.children[2]?.remove();
             block.children[0]?.remove();
         }
-    } else {
-        block.innerHTML = '';
-    }
-}

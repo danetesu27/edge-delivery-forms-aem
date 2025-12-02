@@ -1,6 +1,6 @@
 import { getMetadata } from '../../scripts/aem.js';
 import { moveInstrumentation } from '../../scripts/scripts.js';
-import { getHostname, isAuthorEnvironment } from '../../scripts/utils.js';
+import { getHostname } from '../../scripts/utils.js';
 
 /**
  * @param {HTMLElement} block
@@ -89,103 +89,8 @@ export default async function decorate(block) {
     const aempublishurl = hostname?.replace('author', 'publish')?.replace(/\/$/, '');
 
     const contentPath = block.querySelector('p.button-container > a')?.textContent?.trim();
-    const isAuthor = isAuthorEnvironment();
+    // Replaced imported isAuthorEnvironment with direct check to fix import error
+    const isAuthor = window.location.hostname.includes('author');
 
     // Prepare request configuration based on environment
     const requestConfig = isAuthor
-        ? {
-          url: `${aemauthorurl}${CONFIG.GRAPHQL_QUERY};path=${contentPath};ts=${Date.now()}`,
-          method: 'GET',
-          headers: { 'Content-Type': 'application/json' },
-        }
-        : {
-          url: `${CONFIG.WRAPPER_SERVICE_URL}?${CONFIG.WRAPPER_SERVICE_PARAMS}`,
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            graphQLPath: `${aempublishurl}${CONFIG.GRAPHQL_QUERY}`,
-            cfPath: contentPath,
-            variation: 'master',
-          }),
-        };
-
-    try {
-      // Fetch data
-      const response = await fetch(requestConfig.url, {
-        method: requestConfig.method,
-        headers: requestConfig.headers,
-        ...(requestConfig.body && { body: requestConfig.body }),
-      });
-
-      if (!response.ok) {
-        // eslint-disable-next-line no-console
-        console.error(`error making cf graphql request:${response.status}`);
-        block.innerHTML = '';
-        return;
-      }
-
-      const offer = await response.json();
-      // Get the template URL and parameter mappings
-      const templateURL = offer?.data?.dynamicMediaTemplateByPath?.item?.dm_template;
-      const paramPairs = offer?.data?.dynamicMediaTemplateByPath?.item?.var_mapping;
-
-      // Create parameter object
-      const paramObject = {};
-
-      // Process each parameter pair
-      if (paramPairs) {
-        paramPairs.forEach((pair) => {
-          const indexOfEqual = pair.indexOf('=');
-          const key = pair.slice(0, indexOfEqual).trim();
-          let value = pair.slice(indexOfEqual + 1).trim();
-
-          // Remove trailing comma if any
-          if (value.endsWith(',')) {
-            value = value.slice(0, -1);
-          }
-          paramObject[key] = value;
-        });
-      }
-
-      // Construct the query string (preserving `$` in keys)
-      const queryString = Object.entries(paramObject)
-          .map(([key, value]) => `${key}=${value}`)
-          .join('&');
-
-      // Combine with template URL
-      const finalUrl = templateURL.includes('?')
-          ? `${templateURL}&${queryString}`
-          : `${templateURL}?${queryString}`;
-
-      // Create and append the image element
-      if (finalUrl) {
-        const finalImg = document.createElement('img');
-        Object.assign(finalImg, {
-          className: 'dm-template-image',
-          src: finalUrl,
-          alt: 'dm-template-image',
-        });
-
-        // Add error handling for image load failure
-        finalImg.onerror = function onError() {
-          // eslint-disable-next-line no-console
-          console.warn('Failed to load image:', finalUrl);
-          // Set fallback image
-          this.src = 'https://smartimaging.scene7.com/is/image/DynamicMediaNA/WKND%20Template?wid=2000&hei=2000&qlt=100&fit=constrain';
-          this.alt = 'Fallback image - template image not correctly authored';
-        };
-
-        block.innerHTML = '';
-        block.append(finalImg);
-        moveInstrumentation(block, finalImg);
-      }
-    } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error('error rendering content fragment', {
-        error: error.message,
-        stack: error.stack,
-      });
-      block.innerHTML = '';
-    }
-  }
-}

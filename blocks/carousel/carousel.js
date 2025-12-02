@@ -2,12 +2,6 @@ import { createOptimizedPicture } from '../../scripts/aem.js';
 import { moveInstrumentation } from '../../scripts/scripts.js';
 import createSlider from '../../scripts/slider.js';
 
-function setCarouselItems(number) {
-  const list = document.querySelector('.carousel > ul');
-  if (list) {
-    list.style.setProperty('--items-per-view', number);
-  }
-}
 
 export default function decorate(block) {
   let i = 0;
