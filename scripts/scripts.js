@@ -1,27 +1,34 @@
+/* eslint-disable */
 import {
-  sampleRUM,
   loadHeader,
   loadFooter,
-  decorateButtons as libDecorateButtons, // Aliased to avoid conflict
+  decorateButtons as libDecorateButtons,
   decorateIcons,
   decorateSections,
   decorateBlocks,
   decorateTemplateAndTheme,
-  waitForLCP,
+  waitForFirstImage,
+  loadSection,
+  loadSections,
   loadBlocks,
   loadCSS,
-  getMetadata, // Added missing import used in decorateButtons
-  createOptimizedPicture, // Added missing import used in decorateButtons
+  fetchPlaceholders,
+  getMetadata,
+  loadScript,
+  toClassName,
+  toCamelCase
 } from './aem.js';
+import { picture, source, img } from './dom-helpers.js';
 
-// Assuming these are needed based on usage in the file
 import {
-  picture, source, img,
-} from './dom-helpers.js';
+  getLanguage,
+  formatDate,
+  setPageLanguage,
+  PATH_PREFIX,
+  createSource,
+  getHostname
+} from './utils.js';
 
-// ... (Add other missing imports like getHostname, formatDate, etc. if they are in utils.js) ...
-
-const LCP_BLOCKS = []; // add your LCP blocks to the list
 
 /**
  * Moves all the attributes from a given elmenet to another given element.
@@ -42,13 +49,17 @@ export function moveAttributes(from, to, attributes) {
   });
 }
 
-
 export function isAuthorEnvironment() {
   if(window?.location?.origin?.includes('author')){
     return true;
   }else{
     return false;
   }
+  /*
+  if(document.querySelector('*[data-aue-resource]') !== null){
+    return true;
+  }*/
+  //return false;
 }
 
 /**
@@ -79,20 +90,6 @@ async function loadFonts() {
 }
 
 /**
- * Builds all synthetic blocks in a container element.
- * @param {Element} main The container element
- */
-function buildAutoBlocks() {
-  try {
-    // TODO: add auto block, if needed
-  } catch (error) {
-    // eslint-disable-next-line no-console
-    console.error('Auto Blocking failed', error);
-  }
-}
-
-
-/**
  * Return the placeholder file specific to language
  * @returns
  */
@@ -115,61 +112,18 @@ export async function fetchLanguagePlaceholders() {
   return {}; // default to empty object
 }
 
-// REMOVED DUPLICATE decorateMain HERE
-
 /**
- * Loads everything needed to get to LCP.
- * @param {Element} doc The container element
+ * Builds all synthetic blocks in a container element.
+ * @param {Element} main The container element
  */
-async function loadEager(doc) {
-  // Ensure setPageLanguage and renderWBDataLayer are defined or imported
-  if (typeof setPageLanguage === 'function') setPageLanguage();
-  decorateTemplateAndTheme();
-  await renderWBDataLayer();
-
-  const main = doc.querySelector('main');
-  if (main) {
-    decorateMain(main);
-    document.body.classList.add('appear');
-    // Ensure loadSection and waitForFirstImage are defined or imported
-    // await loadSection(main.querySelector('.section'), waitForFirstImage);
-    await waitForLCP(LCP_BLOCKS); // Reverted to standard call if loadSection isn't available
-  }
-
+function buildAutoBlocks() {
   try {
-    /* if desktop (proxy for fast connection) or fonts already loaded, load fonts.css */
-    if (window.innerWidth >= 900 || sessionStorage.getItem('fonts-loaded')) {
-      loadFonts();
-    }
-  } catch (e) {
-    // do nothing
+    // TODO: add auto block, if needed
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.error('Auto Blocking failed', error);
   }
 }
-
-/**
- * Loads everything that doesn't need to be delayed.
- * @param {Element} doc The container element
- */
-async function loadLazy(doc) {
-  const main = doc.querySelector('main');
-  await loadBlocks(main);
-
-  const { hash } = window.location;
-  const element = hash ? doc.getElementById(hash.substring(1)) : false;
-  if (hash && element) element.scrollIntoView();
-
-  loadHeader(doc.querySelector('header'));
-  loadFooter(doc.querySelector('footer'));
-
-  loadCSS(`${window.hlx.codeBasePath}/styles/lazy-styles.css`);
-  loadFonts();
-  import('../tools/sidekick/aem-genai-variations.js');
-
-  sampleRUM('lazy');
-  sampleRUM.observe(main.querySelectorAll('div[data-block-name]'));
-  sampleRUM.observe(main.querySelectorAll('picture > img'));
-}
-
 
 /**
  * Builds all synthetic blocks in a container element.
@@ -211,8 +165,8 @@ function decorateButtons(main) {
               { ...n, ...formatObj }
           ));
         }
-        const pictureEl = createOptimizedPicture(deliveryUrl, altText, false, breakpoints);
-        img.parentElement.replaceWith(pictureEl);
+        const picture = createOptimizedPicture(deliveryUrl, altText, false, breakpoints);
+        img.parentElement.replaceWith(picture);
       } catch (error) {
         img.setAttribute('style', 'border:5px solid red');
         img.setAttribute('data-asset-type', 'video');
@@ -220,11 +174,8 @@ function decorateButtons(main) {
       }
     }
   });
-  // Now calling the aliased imported function
   libDecorateButtons(main);
 }
-
-// REMOVED DUPLICATE loadDelayed HERE
 
 /**
  * Decorates the main element.
@@ -247,11 +198,7 @@ async function renderWBDataLayer() {
   //const config = await fetchPlaceholders();
   const lastPubDateStr = getMetadata('published-time');
   const firstPubDateStr = getMetadata('content_date') || lastPubDateStr;
-
-  // Ensure getHostname and formatDate are imported or defined
-  const hostnameFromPlaceholders = typeof getHostname === 'function' ? await getHostname() : '';
-
-  window.wbgData = window.wbgData || {}; // Safety check
+  const hostnameFromPlaceholders = await getHostname();
   window.wbgData.page = {
     pageInfo: {
       pageCategory: getMetadata('pagecategory'),
@@ -261,11 +208,99 @@ async function renderWBDataLayer() {
       pageUid: getMetadata('pageuid'),
       pageName: getMetadata('pagename'),
       hostName: hostnameFromPlaceholders ? hostnameFromPlaceholders : getMetadata('hostname'),
-      pageFirstPub: typeof formatDate === 'function' ? formatDate(firstPubDateStr) : firstPubDateStr,
-      pageLastMod: typeof formatDate === 'function' ? formatDate(lastPubDateStr) : lastPubDateStr,
+      pageFirstPub: formatDate(firstPubDateStr),
+      pageLastMod: formatDate(lastPubDateStr),
       webpackage: '',
     },
   };
+}
+
+/**
+ * Loads everything needed to get to LCP.
+ * @param {Element} doc The container element
+ */
+async function loadEager(doc) {
+  setPageLanguage();
+  decorateTemplateAndTheme();
+  renderWBDataLayer();
+  const main = doc.querySelector('main');
+  if (main) {
+    decorateMain(main);
+    document.body.classList.add('appear');
+    await loadSection(main.querySelector('.section'), waitForFirstImage);
+  }
+
+  try {
+    /* if desktop (proxy for fast connection) or fonts already loaded, load fonts.css */
+    if (window.innerWidth >= 900 || sessionStorage.getItem('fonts-loaded')) {
+      loadFonts();
+    }
+  } catch (e) {
+    // do nothing
+  }
+}
+
+/**
+ * Create section background image
+ *
+ * @param {*} doc
+ */
+// function decorateSectionImages(doc) {
+//   const sectionImgContainers = doc.querySelectorAll('main .section[data-image]');
+//   sectionImgContainers.forEach((sectionImgContainer) => {
+//     const sectionImg = sectionImgContainer.dataset.image;
+//     const sectionTabImg = sectionImgContainer.dataset.tabImage;
+//     const sectionMobImg = sectionImgContainer.dataset.mobImage;
+//     let defaultImgUrl = null;
+
+//     const newPic = document.createElement('picture');
+//     if (sectionImg) {
+//       newPic.appendChild(createSource(sectionImg, 1920, '(min-width: 1024px)'));
+//       defaultImgUrl = sectionImg;
+//     }
+
+//     if (sectionTabImg) {
+//       newPic.appendChild(createSource(sectionTabImg, 1024, '(min-width: 768px)'));
+//       defaultImgUrl = sectionTabImg;
+//     }
+
+//     if (sectionMobImg) {
+//       newPic.appendChild(createSource(sectionTabImg, 600, '(max-width: 767px)'));
+//       defaultImgUrl = sectionMobImg;
+//     }
+
+//     const newImg = document.createElement('img');
+//     newImg.src = defaultImgUrl;
+//     newImg.alt = '';
+//     newImg.className = 'sec-img';
+//     newImg.loading = 'lazy';
+//     newImg.width = '768';
+//     newImg.height = '100%';
+
+//     if (defaultImgUrl) {
+//       newPic.appendChild(newImg);
+//       sectionImgContainer.prepend(newPic);
+//     }
+//   });
+// }
+
+/**
+ * Loads everything that doesn't need to be delayed.
+ * @param {Element} doc The container element
+ */
+async function loadLazy(doc) {
+  const main = doc.querySelector('main');
+  await loadSections(main);
+  //decorateSectionImages(doc);
+  const { hash } = window.location;
+  const element = hash ? doc.getElementById(hash.substring(1)) : false;
+  if (hash && element) element.scrollIntoView();
+  //decorateSectionImages(doc);
+  loadHeader(doc.querySelector('header'));
+  loadFooter(doc.querySelector('footer'));
+
+  loadCSS(`${window.hlx.codeBasePath}/styles/lazy-styles.css`);
+  loadFonts();
 }
 
 
@@ -296,11 +331,11 @@ export function decorateDMImages(main) {
 
       const uuidPattern = /([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})/i;
       const match = url.href?.match(uuidPattern);
-      // let aliasname = ''; // Unused variable
+      let aliasname = '';
       if (!match) {
         throw new Error('No asset UUID found in URL');
       }else{
-        // aliasname = match[1];
+        aliasname = match[1];
       }
       let hrefWOExtn =  url.href?.substring(0, url.href?.lastIndexOf('.'))?.replace(/\/original\/(?=as\/)/, '/');
       const pictureEl = picture(
@@ -363,7 +398,6 @@ function adjustAutoImages(main) {
     pElement.className = 'auto-image-container';
   }
 }
-
 
 /**
  * Loads everything that happens a lot later,
